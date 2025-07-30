@@ -5,8 +5,9 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
 from typing import Any
-import httpx
 import argparse
+import httpx
+import uvicorn
 from mcp.server.fastmcp import FastMCP
 
 from vtapi_a import VirusTotalAPI
@@ -114,7 +115,7 @@ async def get_file_reputation(filehash: str) -> str:
 def get_argments() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="Run the weather MCP server.")
-    parser.add_argument("--transport", choices=["sse", "stdio"], default="sse", help="Transport method for the server")
+    parser.add_argument("--transport", choices=["streamable-http", "sse", "stdio"], default="sse", help="Transport method for the server")
     parser.add_argument("--port", type=int, default=8000, help="Port to run the server on (only for sse transport)")
     parser.add_argument("--host", type=str, default="127.0.0.1", help="Host to run the server on (only for sse transport)")
     return parser.parse_args()
@@ -122,10 +123,14 @@ def get_argments() -> argparse.Namespace:
 def main(transport: str, port: int, host: str) -> None:
     """Main function to run the MCP server."""
     if transport == "sse":
+        print(f"Running MCP server on {host}:{port} using SSE transport...")
         mcp.settings.host = host
         mcp.settings.port = port
-        print(f"Running MCP server on {host}:{port} using SSE transport...")
         mcp.run(transport='sse')
+    elif transport == "streamable-http":
+        mcp.settings.host = host
+        mcp.settings.port = port
+        mcp.run(transport='streamable-http')
     elif transport == "stdio":
         mcp.run(transport='stdio')
     else:
